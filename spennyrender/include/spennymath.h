@@ -785,8 +785,8 @@ perspective(const f32 fovy, const f32 aspect_ratio, const f32 front = 0.1, const
     matrix[0][0]  =  front / right;
     matrix[1][1]  =  front / top;
     matrix[2][2] = -(back + front) / (back - front);
-    matrix[2][3] = -(2 * back * front) / (back - front);
-    matrix[3][2] = -1;
+    matrix[2][3] = -1;
+    matrix[3][2] = -(2 * back * front) / (back - front);
     matrix[3][3] =  0;
     return matrix;
 }

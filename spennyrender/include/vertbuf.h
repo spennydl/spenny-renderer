@@ -121,7 +121,44 @@ private:
 
 class IndexBuffer
 {
+public:
+    IndexBuffer()
+    {
+        glGenBuffers(1, &ebo);
+    }
 
+    void buffer_indices(u32* indices, u64 count, u32 mem_type = GL_STATIC_DRAW)
+    {
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(u32), indices, mem_type);
+        n_elems = count;
+    }
+
+    void bind()
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    }
+
+    void unbind()
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+
+    u64 get_n_elems() const noexcept
+    {
+        return n_elems;
+    }
+
+private:
+    GLuint ebo;
+    u64 n_elems;
+};
+
+template<typename Vertex>
+struct IndexedGeometry
+{
+    GLuint prim_type;
+    VertexBuffer<Vertex> vert_buf;
+    IndexBuffer index_buf;
 };
 
 }

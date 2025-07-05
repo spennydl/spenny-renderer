@@ -17,6 +17,16 @@ public:
     void unbind();
     void clear(u32 what = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    u32 get_width() const noexcept
+    {
+        return width;
+    }
+
+    u32 get_height() const noexcept
+    {
+        return height;
+    }
+
     Texture get_depth_buffer();
     Texture get_color_attachment(u32 index);
 

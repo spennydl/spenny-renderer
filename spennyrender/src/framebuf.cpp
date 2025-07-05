@@ -18,8 +18,9 @@ Framebuffer Framebuffer::create_framebuffer(u32 width, u32 height, u32 n_color_a
         Texture& tex = result.m_color_attachments[i];
         builder.with_width(width)
                 .with_height(height)
-                .with_internal_format(GL_RGBA)
+                .with_internal_format(GL_RGBA16F)
                 .with_src_format(GL_RGBA)
+                .with_data_type(GL_FLOAT)
                 .build_into(tex);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, tex.get_id(), 0);
     }

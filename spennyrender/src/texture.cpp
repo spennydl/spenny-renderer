@@ -6,10 +6,6 @@
 #include "texture.h"
 #include "spennytypes.h"
 
-
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 namespace sr
 {
 
@@ -157,14 +153,20 @@ const char* skybox_vs = R"SRC(
 
 layout (location = 0) in vec3 position;
 
-uniform mat4 view;
-uniform mat4 projection;
+layout (std140) uniform GlobalUniforms
+{
+    vec4 clip;
+    vec4 camera_pos;
+    vec4 material_props;
+    mat4 view;
+    mat4 perspective;
+};
 
 out vec3 uv_pos;
 
 void main()
 {
-    vec4 pos = projection * view * vec4(position, 0.0);
+    vec4 pos = perspective * view * vec4(position, 0.0);
     uv_pos = position;
     gl_Position = pos.xyww;
 }
@@ -402,7 +404,7 @@ void Skybox::buffer_cube()
     glBindVertexArray(0);
 }
 
-void Skybox::render(sm::Mat4 view_mat, sm::Mat4 proj_mat)
+void Skybox::render()
 {
     if (cube_vao == 0)
     {
@@ -411,21 +413,10 @@ void Skybox::render(sm::Mat4 view_mat, sm::Mat4 proj_mat)
 
     glBindVertexArray(cube_vao);
 
-    auto no_trans_view = view_mat;
-    no_trans_view[3][0] = 0;
-    no_trans_view[3][1] = 0;
-    no_trans_view[3][2] = 0;
-    no_trans_view[0][3] = 0;
-    no_trans_view[1][3] = 0;
-    no_trans_view[2][3] = 0;
-    no_trans_view[3][3] = 0;
-
     glActiveTexture(GL_TEXTURE0);
     cubemap.bind();
 
     shader.use_program();
-    shader.set_uniform_mat4("view", no_trans_view);
-    shader.set_uniform_mat4("projection", proj_mat);
     shader.set_uniform_int("cubetex", 0);
 
     glDrawArrays(GL_TRIANGLES, 0, 36);

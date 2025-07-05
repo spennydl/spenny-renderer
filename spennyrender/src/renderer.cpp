@@ -78,7 +78,15 @@ Renderer::SDL::~SDL()
 }
 
 Renderer::Renderer(const std::string& win_title, u32 w, u32 h)
-    : sdl(win_title, w, h), default_framebuffer(nullptr)
+    : sdl(win_title, w, h)
+      , default_framebuffer(nullptr)
+      , camera_pos{2, 1, 2}
+      , camera_target{0, 0.5, 0}
+      , fovy{45.0}
+      , near_clip{0.1}
+      , far_clip{100.0}
+      , global_ubo{0}
+      , global_uniforms{0}
 {
     assert(sdl.window && "SDL initialization failed");
 
@@ -93,6 +101,21 @@ Renderer::Renderer(const std::string& win_title, u32 w, u32 h)
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
+
+    global_uniforms.clip.x = out_w;
+    global_uniforms.clip.y = out_h;
+    global_uniforms.clip.z = near_clip;
+    global_uniforms.clip.w = far_clip;
+    global_uniforms.camera_position = sm::Vec4{camera_pos.x, camera_pos.y, camera_pos.z, 1};
+    global_uniforms.view = sm::look_at(camera_pos, camera_target);
+    auto aspect = out_w / out_h;
+    global_uniforms.perspective = sm::perspective(fovy, aspect, near_clip, far_clip);
+
+    glGenBuffers(1, &global_ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(GlobalUniforms), &global_uniforms, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, global_ubo);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void Renderer::start(const std::string& win_title, u32 w, u32 h)
@@ -111,7 +134,9 @@ void Renderer::end()
 
 void Renderer::begin_frame()
 {
-    get_default_framebuffer()->clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    auto& framebuf = get_default_framebuffer();
+    framebuf->clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    get_renderer()->send_global_uniforms();
 }
 
 void Renderer::end_frame()
@@ -135,9 +160,62 @@ void Renderer::set_clear_color(sm::Vec4 rgba)
     glClearColor(rgba.r, rgba.g, rgba.b, rgba.a);
 }
 
+void Renderer::set_camera_position(sm::Vec3 camera_pos)
+{
+    get_renderer()->camera_pos = camera_pos;
+}
+
+void Renderer::set_camera_target(sm::Vec3 camera_target)
+{
+    get_renderer()->camera_target = camera_target;
+}
+
+void Renderer::set_fovy(f32 fovy)
+{
+    get_renderer()->fovy = fovy;
+}
+
+void Renderer::set_near_clip(f32 near_clip)
+{
+    get_renderer()->near_clip = near_clip;
+}
+
+void Renderer::set_far_clip(f32 far_clip)
+{
+    get_renderer()->far_clip = far_clip;
+}
+
 const Renderer::SDL& Renderer::get_sdl()
 {
     return sdl;
+}
+
+void Renderer::send_global_uniforms()
+{
+    // TODO: Not this! We need to know dimensions of the framebuffer we're rendering to!
+    auto& framebuf = get_default_framebuffer();
+    auto aspect = framebuf->get_width() / framebuf->get_height();
+    global_uniforms.clip.x = framebuf->get_width();
+    global_uniforms.clip.y = framebuf->get_height();
+    global_uniforms.clip.z = near_clip;
+    global_uniforms.clip.w = far_clip;
+    global_uniforms.camera_position = sm::Vec4{camera_pos.x, camera_pos.y, camera_pos.z, 1};
+    global_uniforms.view = sm::look_at(camera_pos, camera_target);
+    global_uniforms.perspective = sm::perspective(fovy, aspect, near_clip, far_clip);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(GlobalUniforms), &global_uniforms);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void Renderer::update_material_uniform(f32 roughness, f32 metalness)
+{
+    global_uniforms.material_properties.x = roughness;
+    global_uniforms.material_properties.y = metalness;
+
+    glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, offsetof(GlobalUniforms, material_properties), sizeof(sm::Vec4), &global_uniforms.material_properties);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 }

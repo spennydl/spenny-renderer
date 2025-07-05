@@ -141,7 +141,7 @@ public:
     void load_from_dir(const std::string& images);
     void load_from_hdr(const std::string& hdr);
 
-    void render(sm::Mat4 view_mat, sm::Mat4 proj_mat);
+    void render();
 
 private:
 

@@ -87,7 +87,7 @@ Texture load_embedded_texture(const aiScene* scene, const aiString* tex_name, bo
         }
         u32 format = is_linear ? GL_RGBA : GL_SRGB_ALPHA;
         Texture result;
-        result.load_texture(w, h, data, format);
+        result.load_texture(w, h, data, format, GL_REPEAT);
         return result;
     }
     else
