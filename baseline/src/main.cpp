@@ -52,7 +52,7 @@ auto buffer_quad() -> sr::IndexedGeometry<SimpleVertex>
 
 auto main(void) -> int
 {
-    sr::Renderer::start("spenny renderer", 1280, 720);
+    sr::Renderer::start("spenny renderer - baseline PBR", 1280, 720);
 
     using VertBuf = sr::VertexBuffer<sr::Vertex>;
     using IndexedGeom = sr::IndexedGeometry<sr::Vertex>;
@@ -82,7 +82,7 @@ auto main(void) -> int
     }
 
     sr::ModelLoader model_loader;
-    auto maybe_model = model_loader.load_from_file(BASELINE_RESOURCE_DIR "/testarena/testlevel.glb");
+    auto maybe_model = model_loader.load_from_file(BASELINE_RESOURCE_DIR "/fox/fox.glb");
     if (!maybe_model)
     {
         return 1;
@@ -119,7 +119,7 @@ auto main(void) -> int
         mat_idxs.push_back(mesh.material_index);
     }
 
-    auto model_to_world = sm::scale_by(sm::Vec3{50, 1, 50});
+    auto model_to_world = sm::mat4_I();//sm::scale_by(sm::Vec3{50, 1, 50});
 
     sr::Framebuffer depth_buffer = sr::Framebuffer::create_framebuffer(1280, 720, 0, true);
     sr::Framebuffer render_buffer = sr::Framebuffer::create_framebuffer(1280, 720, 1, depth_buffer.get_depth_buffer());

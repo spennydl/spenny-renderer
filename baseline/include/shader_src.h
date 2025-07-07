@@ -147,20 +147,17 @@ vec3 brdf(vec3 normal, vec3 light_dir, vec3 view_dir, vec3 half_dir, vec3 albedo
 void main()
 {
     vec3 light_color = vec3(14, 14, 9.3);
-    //float lightx = cos(t) * 3;
-    //float lightz = sin(t) * 10;
-    //vec3 light_pos = vec3(lightx, lightz, 2);
 
-    vec3 light_dir_p = vec3(-20, 20, -20);//light_pos - frag_world_pos;
+    vec3 light_dir_p = vec3(1.25, 1.25, 1.25);
     vec3 view_dir = normalize(vec3(camera_pos) - frag_world_pos);
 
     float dist = length(light_dir_p);
     vec3 light_dir = light_dir_p / dist;
-    float atten = 1;// / dist;
+    float atten = 1 / (dist * dist);
 
     float alpha = 0.8;
     float metalness = 0.0;
-    vec4 color = texture(teximg, tex * 4);
+    vec4 color = texture(teximg, tex);
     vec3 ambient = vec3(0.0, 0.1, 0.2) * color.xyz;
 
     vec3 sampled_norm = texture(normals, tex).rgb;

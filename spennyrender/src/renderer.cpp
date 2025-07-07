@@ -194,7 +194,7 @@ void Renderer::send_global_uniforms()
 {
     // TODO: Not this! We need to know dimensions of the framebuffer we're rendering to!
     auto& framebuf = get_default_framebuffer();
-    auto aspect = framebuf->get_width() / framebuf->get_height();
+    auto aspect = (f32)framebuf->get_width() / (f32)framebuf->get_height();
     global_uniforms.clip.x = framebuf->get_width();
     global_uniforms.clip.y = framebuf->get_height();
     global_uniforms.clip.z = near_clip;
