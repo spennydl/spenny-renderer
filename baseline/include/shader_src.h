@@ -146,28 +146,39 @@ vec3 brdf(vec3 normal, vec3 light_dir, vec3 view_dir, vec3 half_dir, vec3 albedo
 
 void main()
 {
-    vec3 light_color = vec3(14, 14, 9.3);
+    vec3 light_color = vec3(4, 4, 3.4);
 
     vec3 light_dir_p = vec3(1.25, 1.25, 1.25);
     vec3 view_dir = normalize(vec3(camera_pos) - frag_world_pos);
 
     float dist = length(light_dir_p);
     vec3 light_dir = light_dir_p / dist;
-    float atten = 1 / (dist * dist);
+    float atten = 1;// / (dist * dist);
 
-    float alpha = 0.8;
-    float metalness = 0.0;
-    vec4 color = texture(teximg, tex);
-    vec3 ambient = vec3(0.0, 0.1, 0.2) * color.xyz;
+    float roughness = material_props.x;
+    float metalness = material_props.y;
 
-    vec3 sampled_norm = texture(normals, tex).rgb;
-    sampled_norm = (sampled_norm * 2.0) - 1.0;
+    vec3 mapped_norm = vec3(0);
+    if (material_props.z > 0)
+    {
+        vec3 sampled_norm = texture(normals, tex).rgb;
+        sampled_norm = (sampled_norm * 2.0) - 1.0;
+        mapped_norm = normalize(tan_cob * sampled_norm);
+    }
+    else
+    {
+        mapped_norm = normalize(norm);
+    }
 
     vec3 half_dir = normalize(view_dir + light_dir);
 
-    vec3 mapped_norm = normalize(tan_cob * sampled_norm);
+    vec4 color = texture(teximg, tex);
+    vec3 ambient = mix(vec3(0), color.xyz, 0.5);//vec3(0.3, 0.35, 0.4) * color.xyz;
 
-    vec3 final_color = brdf(mapped_norm, light_dir, view_dir, half_dir, color.xyz, alpha, metalness) * (light_color * atten) * max(dot(light_dir, mapped_norm), 0) + ambient;
+    vec3 final_color = brdf(mapped_norm, light_dir, view_dir, half_dir, color.xyz, roughness, metalness)
+        * (light_color * atten)
+        * max(dot(light_dir, mapped_norm), 0)
+        + ambient;
 
     float exposure = 0.7;
     final_color = vec3(1.0) - exp(-final_color * exposure);

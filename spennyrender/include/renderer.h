@@ -9,6 +9,7 @@
 #include "spennytypes.h"
 #include "spennymath.h"
 #include "vertbuf.h"
+#include "model.h"
 
 namespace sr
 {
@@ -46,7 +47,7 @@ struct GlobalUniforms
     sm::Vec4 clip;
     sm::Vec4 camera_position;
 
-    // roughness, metallic, pad, pad
+    // roughness, metallic, has normal, pad
     sm::Vec4 material_properties;
 
     sm::Mat4 view;
@@ -73,6 +74,8 @@ public:
     static void set_near_clip(f32 near_clip);
     static void set_far_clip(f32 far_clip);
 
+    static void use_material(Material& material);
+
     template<typename Vert>
     static void draw_indexed_geom(IndexedGeometry<Vert>& geom)
     {
@@ -98,7 +101,7 @@ private:
     Renderer(const std::string& win_title, u32 w, u32 h);
 
     void send_global_uniforms();
-    void update_material_uniform(f32 roughness, f32 metalness);
+    void update_material_uniform(f32 roughness, f32 metalness, bool has_normal_map);
 
     SDL sdl;
     std::unique_ptr<Framebuffer> default_framebuffer;

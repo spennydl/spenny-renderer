@@ -82,12 +82,20 @@ auto main(void) -> int
     }
 
     sr::ModelLoader model_loader;
-    auto maybe_model = model_loader.load_from_file(BASELINE_RESOURCE_DIR "/fox/fox.glb");
+    auto maybe_model = model_loader.load_from_file(BASELINE_RESOURCE_DIR "/testarena/testlevel.glb");
     if (!maybe_model)
     {
         return 1;
     }
     auto model = *maybe_model;
+    std::cout << "Loaded " << model.meshes.size() << " meshes" << std::endl;
+
+    auto maybe_fox = model_loader.load_from_file(BASELINE_RESOURCE_DIR "/fox/fox.glb");
+    if (!maybe_fox)
+    {
+        return 1;
+    }
+    auto fox = *maybe_fox;
     std::cout << "Loaded " << model.meshes.size() << " meshes" << std::endl;
 
     auto quad = buffer_quad();
@@ -102,6 +110,25 @@ auto main(void) -> int
     std::vector<u32> mat_idxs;
 
     for (auto& mesh : model.meshes)
+    {
+        GLuint ebo;
+
+        IndexedGeom geometry;
+        geometry.prim_type = GL_TRIANGLES;
+
+        geometry.vert_buf.buffer_data(mesh.verts.data(), mesh.verts.size());
+        geometry.vert_buf.bind_vao();
+
+        geometry.index_buf.bind();
+        geometry.index_buf.buffer_indices(mesh.indices.data(), mesh.indices.size());
+
+        geometry.vert_buf.unbind_vao();
+        buffers.push_back(geometry);
+        mat_idxs.push_back(mesh.material_index);
+    }
+
+    u32 fox_start = buffers.size();
+    for (auto& mesh : fox.meshes)
     {
         GLuint ebo;
 
@@ -147,13 +174,14 @@ auto main(void) -> int
         f32 time_s = ticks / 1000.0f;
         f32 dt = ticks_delta / 1000.0f;
 
-        sm::Vec4 camera_pos_h = sm::Vec4{2, 1, 2, 1};
+        sm::Vec4 camera_pos_h = sm::Vec4{2, 2, 2, 1};
         sm::Mat4 rot = sm::rotate(0, 36.0 * dt, 0);
 
         camera_pos_h = rot * camera_pos_h;
         sm::Vec3 camera_pos{ camera_pos_h.x, camera_pos_h.y, camera_pos_h.z };
 
         sr::Renderer::set_camera_position(camera_pos);
+        sr::Renderer::set_camera_target(sm::Vec3{0, 2, 0});
 
         sr::Renderer::begin_frame();
         // depth prepass
@@ -161,9 +189,13 @@ auto main(void) -> int
         depth_buffer.clear(GL_DEPTH_BUFFER_BIT);
         depth_prepass.use_program();
         depth_prepass.set_uniform_mat4("model_to_world", model_to_world);
-        for (auto& buffer : buffers)
+        for (u32 i = 0; i < buffers.size(); i++)
         {
-            sr::Renderer::draw_indexed_geom(buffer);
+            if (i >= fox_start)
+            {
+                depth_prepass.set_uniform_mat4("model_to_world", sm::translation_by(sm::Vec3{0, 1, 0}));
+            }
+            sr::Renderer::draw_indexed_geom(buffers[i]);
         }
         depth_buffer.unbind();
 
@@ -180,9 +212,21 @@ auto main(void) -> int
 
         for (u32 i = 0; i < buffers.size(); i++)
         {
-            auto mat = model.materials[mat_idxs[i]];
+            sr::Material mat;
+            if (i >= fox_start)
+            {
+                mat = fox.materials[mat_idxs[i]];
+                shader.set_uniform_mat4("model_to_world", sm::translation_by(sm::Vec3{0, 1, 0}));
+            }
+            else
+            {
+                mat = model.materials[mat_idxs[i]];
+            }
             auto diffuse = mat.diffuse;
             auto normals = mat.normals;
+
+            sr::Renderer::use_material(mat);
+
             diffuse.bind_texture(GL_TEXTURE0);
             normals.bind_texture(GL_TEXTURE1);
 

@@ -105,11 +105,9 @@ void load_materials(const aiScene* scene, Model* model)
     {
         auto ai_material = scene->mMaterials[mat_idx];
         auto& material = model->materials[mat_idx];
-        auto metalp = &material.metallic;
-        auto roughp = &material.roughness;
 
-        ai_material->Get(AI_MATKEY_METALLIC_FACTOR, metalp);
-        ai_material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughp);
+        ai_material->Get(AI_MATKEY_METALLIC_FACTOR, material.metallic);
+        ai_material->Get(AI_MATKEY_ROUGHNESS_FACTOR, material.roughness);
 
         if (ai_material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
         {

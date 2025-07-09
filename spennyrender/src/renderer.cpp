@@ -190,6 +190,11 @@ const Renderer::SDL& Renderer::get_sdl()
     return sdl;
 }
 
+void Renderer::use_material(Material& material)
+{
+    get_renderer()->update_material_uniform(material.roughness, material.metallic, material.normals.get_id() != 0);
+}
+
 void Renderer::send_global_uniforms()
 {
     // TODO: Not this! We need to know dimensions of the framebuffer we're rendering to!
@@ -208,10 +213,11 @@ void Renderer::send_global_uniforms()
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void Renderer::update_material_uniform(f32 roughness, f32 metalness)
+void Renderer::update_material_uniform(f32 roughness, f32 metalness, bool has_normal_map)
 {
     global_uniforms.material_properties.x = roughness;
     global_uniforms.material_properties.y = metalness;
+    global_uniforms.material_properties.z = has_normal_map ? 1.0f : 0.0f;
 
     glBindBuffer(GL_UNIFORM_BUFFER, global_ubo);
     glBufferSubData(GL_UNIFORM_BUFFER, offsetof(GlobalUniforms, material_properties), sizeof(sm::Vec4), &global_uniforms.material_properties);
