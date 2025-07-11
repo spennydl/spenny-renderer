@@ -148,8 +148,10 @@ auto main(void) -> int
 
     auto model_to_world = sm::mat4_I();//sm::scale_by(sm::Vec3{50, 1, 50});
 
-    sr::Framebuffer depth_buffer = sr::Framebuffer::create_framebuffer(1280, 720, 0, true);
-    sr::Framebuffer render_buffer = sr::Framebuffer::create_framebuffer(1280, 720, 1, depth_buffer.get_depth_buffer());
+    // TODO: should have a flags param or something instead of true/false.
+    sr::Framebuffer depth_buffer = sr::Framebuffer::create_framebuffer(1280, 720, 0, true, true);
+    sr::Framebuffer render_buffer = sr::Framebuffer::create_framebuffer(1280, 720, 1, depth_buffer.get_depth_buffer(), true);
+    sr::Framebuffer resolve_buffer = sr::Framebuffer::create_framebuffer(1280, 720, 1, true, false);
 
     i64 ticks = SDL_GetTicks();
     i64 last_ticks = ticks;
@@ -236,9 +238,12 @@ auto main(void) -> int
         hdr_skybox.render();
 
         render_buffer.unbind();
+
+        render_buffer.resolve_to(resolve_buffer);
+
         sr::Renderer::get_default_framebuffer()->bind();
 
-        render_buffer.get_color_attachment(0).bind_texture(GL_TEXTURE0);
+        resolve_buffer.get_color_attachment(0).bind_texture(GL_TEXTURE0);
         screen_shader.use_program();
         screen_shader.set_uniform_int("scene", GL_TEXTURE0);
 

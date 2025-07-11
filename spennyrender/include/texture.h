@@ -42,7 +42,8 @@ class TextureBuilder
 {
 public:
     TextureBuilder()
-        : level(0),
+        : type(GL_TEXTURE_2D),
+          level(0),
           internal_format(GL_RGBA),
           width(0),
           height(0),
@@ -50,10 +51,12 @@ public:
           filter(GL_LINEAR),
           wrap(GL_CLAMP_TO_EDGE),
           data_type(GL_UNSIGNED_BYTE),
+          samples(4),
           data(nullptr)
         {
         }
 
+    TextureBuilder& with_type(u32 t) { type = t; return *this; }
     TextureBuilder& with_level(u32 l) { level = l; return *this; }
     TextureBuilder& with_internal_format(u32 format) { internal_format = format; return *this; }
     TextureBuilder& with_width(u32 w) { width = w; return *this; }
@@ -62,12 +65,14 @@ public:
     TextureBuilder& with_filter(u32 f) { filter = f; return *this; }
     TextureBuilder& with_wrap(u32 w) { wrap = w; return *this; }
     TextureBuilder& with_data_type(u32 d) { data_type = d; return *this; }
+    TextureBuilder& with_samples(u32 s) { samples = s; return *this; }
     TextureBuilder& with_data(void* d) { data = d; return *this; }
 
     Texture build();
     void build_into(Texture& tex);
 
 private:
+    u32 type;
     u32 level;
     u32 internal_format;
     u32 width;
@@ -76,6 +81,7 @@ private:
     u32 filter;
     u32 wrap;
     u32 data_type;
+    u32 samples;
     void* data;
 };
 

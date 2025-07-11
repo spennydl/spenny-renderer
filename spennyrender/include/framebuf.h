@@ -30,10 +30,12 @@ public:
     Texture get_depth_buffer();
     Texture get_color_attachment(u32 index);
 
+    void resolve_to(Framebuffer& target);
+
     void put_color_attachment(Texture attachment, u32 attachment_no, u32 type = GL_TEXTURE_2D);
 
-    static Framebuffer create_framebuffer(u32 width, u32 height, u32 n_color_attachments, bool use_depth_attachement = true);
-    static Framebuffer create_framebuffer(u32 width, u32 height, u32 n_color_attachments, Texture depth_attachment);
+    static Framebuffer create_framebuffer(u32 width, u32 height, u32 n_color_attachments, bool use_depth_attachement = true, bool multisample = false);
+    static Framebuffer create_framebuffer(u32 width, u32 height, u32 n_color_attachments, Texture depth_attachment, bool multisample = false);
 
 private:
 

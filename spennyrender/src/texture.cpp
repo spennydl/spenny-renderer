@@ -73,25 +73,39 @@ Texture TextureBuilder::build()
     result.w = width;
     result.h = height;
     glGenTextures(1, &result.id);
-    glBindTexture(GL_TEXTURE_2D, result.id);
+    glBindTexture(type, result.id);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+    glTexParameteri(type, GL_TEXTURE_WRAP_S, wrap);
+    glTexParameteri(type, GL_TEXTURE_WRAP_T, wrap);
+    glTexParameteri(type, GL_TEXTURE_MIN_FILTER, filter);
+    glTexParameteri(type, GL_TEXTURE_MAG_FILTER, filter);
 
-    glTexImage2D(GL_TEXTURE_2D,
-                 level,
-                 internal_format,
-                 width,
-                 height,
-                 0,
-                 src_format,
-                 data_type,
-                 data);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    if (type == GL_TEXTURE_2D_MULTISAMPLE)
+    {
+        assert(samples > 0 && "Must set samples on multisampled texture");
+        glTexImage2DMultisample(type,
+                    samples,
+                    internal_format,
+                    width,
+                    height,
+                    GL_TRUE);
+    }
+    else
+    {
+        glTexImage2D(type,
+                    level,
+                    internal_format,
+                    width,
+                    height,
+                    0,
+                    src_format,
+                    data_type,
+                    data);
+        glGenerateMipmap(type);
+    }
 
-    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glBindTexture(type, 0);
 
     return result;
 }
@@ -101,25 +115,38 @@ void TextureBuilder::build_into(Texture& result)
     result.w = width;
     result.h = height;
     glGenTextures(1, &result.id);
-    glBindTexture(GL_TEXTURE_2D, result.id);
+    glBindTexture(type, result.id);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+    glTexParameteri(type, GL_TEXTURE_WRAP_S, wrap);
+    glTexParameteri(type, GL_TEXTURE_WRAP_T, wrap);
+    glTexParameteri(type, GL_TEXTURE_MIN_FILTER, filter);
+    glTexParameteri(type, GL_TEXTURE_MAG_FILTER, filter);
 
-    glTexImage2D(GL_TEXTURE_2D,
-                 level,
-                 internal_format,
-                 width,
-                 height,
-                 0,
-                 src_format,
-                 data_type,
-                 data);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    if (type == GL_TEXTURE_2D_MULTISAMPLE)
+    {
+        assert(samples > 0 && "Must set samples on multisampled texture");
+        glTexImage2DMultisample(type,
+                    samples,
+                    internal_format,
+                    width,
+                    height,
+                    GL_TRUE);
+    }
+    else
+    {
+        glTexImage2D(type,
+                    level,
+                    internal_format,
+                    width,
+                    height,
+                    0,
+                    src_format,
+                    data_type,
+                    data);
+        glGenerateMipmap(type);
+    }
 
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(type, 0);
 }
 
 void Texture::unbind()

@@ -159,7 +159,6 @@ void main()
     vec3 lambert = vec3(albedo / pi);
     vec3 final_color = vec3(0);
 
-
     for (int i = 0; i < 4; i++)
     {
         vec3 light = lights[i];
@@ -191,7 +190,6 @@ void main()
     float exposure = 0.7;
     final_color = vec3(1.0) - exp(-final_color * exposure);
 
-    //final_color = final_color / (final_color + vec3(1.0));
     final_color = pow(final_color, vec3(1.0/2.2));
 
     FragColor = vec4(final_color, albedo.w);
@@ -221,19 +219,8 @@ in vec2 UV;
 out vec4 FragColor;
 uniform sampler2D scene;
 
-float near = 0.01;
-float far = 100.0;
-
-float LinearizeDepth(float depth)
-{
-    float z = depth * 2.0 - 1.0; // back to NDC
-    return (2.0 * near * far) / (far + near - z * (far - near));
-}
-
 void main()
 {
-    //float depth_val = LinearizeDepth(texture(depth_attachment, UV).r) / far;
-    //FragColor = vec4(depth_val, depth_val, depth_val, 1);
     FragColor = texture(scene, UV);
 }
 )SRC";
