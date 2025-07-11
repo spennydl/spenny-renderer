@@ -128,65 +128,73 @@ vec3 fresn(float cosT, vec3 color, float metalness)
     return f0 + (1.0 - f0) * pow(clamp(1.0 - cosT, 0, 1), 5.0);
 }
 
-vec3 brdf(vec3 normal, vec3 light_dir, vec3 view_dir, vec3 half_dir, vec3 albedo, float alpha, float metalness)
-{
-    vec3 lambert = vec3(albedo / pi);
-
-    float d = trggx(normal, half_dir, alpha);
-    float g = ggx(normal, view_dir, light_dir, alpha);
-    float cosT = max(dot(half_dir, view_dir), 0);
-    vec3 f = fresn(cosT, albedo, metalness);
-    vec3 num = d * f * g;
-    float denom = 4 * max(dot(normal, view_dir), 0.0) * max(dot(normal, light_dir), 0.0);
-
-    vec3 kd = (1 - metalness) * (vec3(1.0) - f);
-
-    return kd * lambert + (num / (denom + 0.0001));
-}
-
 void main()
 {
+    vec3 lights[4];
+    lights[0] = vec3(2, 2, 2);
+    lights[1] = vec3(-2, 2, 2);
+    lights[2] = vec3(2, 2, -2);
+    lights[3] = vec3(-2, 2, -2);
     vec3 light_color = vec3(4, 4, 3.4);
-
-    vec3 light_dir_p = vec3(1.25, 1.25, 1.25);
-    vec3 view_dir = normalize(vec3(camera_pos) - frag_world_pos);
-
-    float dist = length(light_dir_p);
-    vec3 light_dir = light_dir_p / dist;
-    float atten = 1;// / (dist * dist);
 
     float roughness = material_props.x;
     float metalness = material_props.y;
 
-    vec3 mapped_norm = vec3(0);
+    vec3 normal = vec3(0);
     if (material_props.z > 0)
     {
         vec3 sampled_norm = texture(normals, tex).rgb;
         sampled_norm = (sampled_norm * 2.0) - 1.0;
-        mapped_norm = normalize(tan_cob * sampled_norm);
+        normal = normalize(tan_cob * sampled_norm);
     }
     else
     {
-        mapped_norm = normalize(norm);
+        normal = normalize(norm);
     }
 
-    vec3 half_dir = normalize(view_dir + light_dir);
+    vec3 view_dir = normalize(vec3(camera_pos) - frag_world_pos);
 
-    vec4 color = texture(teximg, tex);
-    vec3 ambient = mix(vec3(0), color.xyz, 0.5);//vec3(0.3, 0.35, 0.4) * color.xyz;
+    vec4 albedo = texture(teximg, tex);
 
-    vec3 final_color = brdf(mapped_norm, light_dir, view_dir, half_dir, color.xyz, roughness, metalness)
-        * (light_color * atten)
-        * max(dot(light_dir, mapped_norm), 0)
-        + ambient;
+    vec3 lambert = vec3(albedo / pi);
+    vec3 final_color = vec3(0);
 
+
+    for (int i = 0; i < 4; i++)
+    {
+        vec3 light = lights[i];
+        vec3 to_light = light - frag_world_pos;
+
+
+        float dist_to_light = length(to_light);
+        vec3 light_dir = to_light / dist_to_light;
+        vec3 half_dir = normalize(view_dir + light_dir);
+
+        float ndotl = max(dot(light_dir, normal), 0);
+        float attenuation = 1 / dist_to_light;
+
+        // the brdf part
+        float d = trggx(normal, half_dir, roughness);
+        float g = ggx(normal, view_dir, light_dir, roughness);
+        float cosT = max(dot(half_dir, view_dir), 0);
+        vec3 f = fresn(cosT, albedo.xyz, metalness);
+        vec3 num = d * f * g;
+        float denom = 4 * max(dot(normal, view_dir), 0.0) * max(dot(normal, light_dir), 0.0);
+
+        vec3 kd = (1 - metalness) * (vec3(1.0) - f);
+
+        final_color += ((kd * lambert) + (num / (denom + 0.0001))) * (light_color * attenuation) * ndotl;
+    }
+
+    vec3 ambient = 0.2 * albedo.xyz;//mix(vec3(0), albedo.xyz, 0.0);
+    final_color += ambient;
     float exposure = 0.7;
     final_color = vec3(1.0) - exp(-final_color * exposure);
 
     //final_color = final_color / (final_color + vec3(1.0));
     final_color = pow(final_color, vec3(1.0/2.2));
 
-    FragColor = vec4(final_color, color.w);
+    FragColor = vec4(final_color, albedo.w);
 }
 )SRC";
 
